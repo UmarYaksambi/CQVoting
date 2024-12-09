@@ -3,7 +3,7 @@ import requests
 from time import sleep
 
 def main():
-    # Initialize session state
+    # Initialize session state if not already set
     if "credits" not in st.session_state:
         st.session_state["credits"] = 100
     if "votes" not in st.session_state:
@@ -63,35 +63,64 @@ def main():
 
     # Main content area for projects
     with col1:
+        total_cost = 0  # Initialize total cost outside the loop to track total votes' cost
+
         for project in projects:
-            st.write(f"### {project['name']} 📌")
-            st.image(project["image_url"], width=200)
-            st.write(project["description"])
-            st.markdown(f"[GitHub Link]({project['github_url']})")
+            with st.expander(f"Project: {project['name']} 📌", expanded=True):
+                col1_1, col1_2 = st.columns([1, 3])  # Two-column layout for project image and details
 
-            # Number input for votes
-            votes = st.number_input(f"Votes for {project['name']}", min_value=0, step=1, key=project["id"])
+                with col1_1:
+                    # Safely access and display preview image
+                    preview_image = project.get('preview_image_url', '')
+                    if preview_image:
+                        st.image(preview_image, width=200)
+                    else:
+                        st.write("No image available")
 
-            # Update session state with the new vote count
-            st.session_state["votes"][project["id"]] = votes
+                with col1_2:
+                    # Project description
+                    st.write(f"**Description:** {project['description']}")
+                    
+                    # Display links to GitHub and YouTube if available
+                    st.markdown(f"[GitHub Link]({project['github_url']})")
 
-            # Calculate the total cost for this project's votes
-            total_cost = 0
-            for project_id, vote_count in st.session_state["votes"].items():
-                total_cost += quadratic_cost(vote_count)
+                    youtube_link = project.get('youtube_url', '')  # Safely access youtube_link
+                    if youtube_link:
+                        st.markdown(f"[YouTube Link]({youtube_link})")
+                    else:
+                        st.markdown("No YouTube link available")
+                    
+                    # Display README content
+                    st.markdown("### README 📖")
+                    # Generate a unique key for each readme using either project['id'] or fallback to the loop index if id is None
+                    unique_readme_key = f"readme_{project['id']}" if project['id'] else f"readme_{projects.index(project)}"
+                    st.text_area("README", value=project["readme_content"], height=300, disabled=True, key=unique_readme_key)
 
-            # Update credits by deducting the total cost from 100
-            st.session_state["credits"] = max(0, 100 - total_cost)
+                    # Ensure a unique key for each number_input element
+                    unique_vote_key = f"vote_{project['id']}" if project['id'] else f"vote_{projects.index(project)}"
+                    votes = st.number_input(f"Votes for {project['name']}", min_value=0, step=1, key=unique_vote_key)
 
+                    # Update session state with the new vote count for this specific project
+                    st.session_state["votes"][project["id"]] = votes
+
+                    # Calculate the total cost for this project's votes and add to the global total cost
+                    total_cost += quadratic_cost(votes)
+
+        # Update the remaining credits by deducting the total cost from the initial 100 credits
+        st.session_state["credits"] = max(0, 100 - total_cost)
+
+    # Display the Submit button and submit votes if clicked
     st.markdown("### 🗳️ Submit Your Votes")
     if st.button("Submit Votes"):
         if st.session_state["credits"] >= 0:
             try:
+                # Submit the votes to the backend
                 response = requests.post("http://localhost:8080/submit-votes", json={"votes": st.session_state["votes"]})
-                response.raise_for_status()
-                st.session_state["submitted"] = True
+                response.raise_for_status()  # Ensure a successful response
+
+                st.session_state["submitted"] = True  # Mark as submitted
                 st.success("Votes submitted successfully! 🎉")
-                sleep(1)
+                sleep(1)  # Add delay before navigating to the next page
                 st.switch_page("pages/submitted.py")
 
             except requests.exceptions.RequestException as e:
@@ -99,7 +128,7 @@ def main():
         else:
             st.error("Not enough credits to submit votes!")
 
-    # Footer
+    # Footer with additional information
     st.markdown("---")
     st.markdown("📢 **Quadratic Voting** is a fair voting method for allocating limited resources to the projects you care about.")
 
@@ -107,7 +136,7 @@ def main():
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-if st.session_state["logged_in"] == True:
+if st.session_state["logged_in"]:
     main()
 else:
     st.switch_page("pages/login.py")

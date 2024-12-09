@@ -5,25 +5,53 @@ app = FastAPI()
 
 # Mock Database
 projects = [
-    {"id": 1, "name": "Project A", "description": "Description A", "image_url": "https://via.placeholder.com/200", "github_url": "https://github.com/example/project-a"},
-    {"id": 2, "name": "Project B", "description": "Description B", "image_url": "https://via.placeholder.com/200", "github_url": "https://github.com/example/project-b"},
+    {
+        "id": 1,
+        "name": "Project A",
+        "description": "Description A",
+        "image_url": "https://via.placeholder.com/200",
+        "github_url": "https://github.com/example/project-a",
+    },
+    {
+        "id": 2,
+        "name": "Project B",
+        "description": "Description B",
+        "image_url": "https://via.placeholder.com/200",
+        "github_url": "https://github.com/example/project-b",
+    },
 ]
 votes_db = []
 
+
 class VoteSubmission(BaseModel):
-    votes: dict
+    votes: dict  # project_id -> number of votes
+
 
 @app.get("/projects")
 def get_projects():
     return projects
 
+
 @app.post("/submit-votes")
 def submit_votes(submission: VoteSubmission):
-    total_credits = sum(v**2 for v in submission.votes.values())
-    if total_credits > 100:
-        raise HTTPException(status_code=400, detail="Not enough credits")
+    total_credits_used = 0
+
+    # Calculate the total cost of votes
+    for project_id, votes in submission.votes.items():
+        # Calculate the cumulative quadratic cost for votes per project
+        cumulative_cost = sum(i**2 for i in range(1, votes + 1))
+        total_credits_used += cumulative_cost
+
+    # Check if total credits exceed the limit
+    if total_credits_used > 100:
+        raise HTTPException(
+            status_code=400, detail="Not enough credits to submit these votes."
+        )
+
+    # Store the votes in the mock database
     votes_db.append(submission.votes)
     return {"message": "Votes submitted successfully!"}
+
 
 @app.get("/results")
 def get_results():

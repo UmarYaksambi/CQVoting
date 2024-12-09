@@ -7,9 +7,9 @@ if "credits" not in st.session_state:
 if "votes" not in st.session_state:
     st.session_state["votes"] = {}
 
-# Function to calculate quadratic cost
+# Function to calculate the quadratic cost for a vote incrementally
 def quadratic_cost(votes):
-    return votes ** 2
+    return sum(i ** 2 for i in range(1, votes + 1))
 
 # Fetch project details from backend
 try:
@@ -21,18 +21,42 @@ except requests.exceptions.RequestException as e:
     projects = []
 
 # Set up the page layout
-st.set_page_config(page_title="Quadratic Voting", layout="wide")
+st.set_page_config(page_title="CQVoting", layout="wide", page_icon="🚀")
 
 # Main title
-st.title("🎉 Collaborative Quadratic Voting 🎉")
+st.title("Collaborative Quadratic Voting 🗳️")
 
 # Layout: Main content and sidebar
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns([3, 1.1])
 
-# Sidebar for credits (always visible)
 with col2:
+    # Display Credits Information
     st.markdown("## Your Credits 💰")
     st.metric(label="Credits Remaining", value=st.session_state["credits"])
+    st.markdown("---")
+
+    # About Quadratic Voting
+    st.markdown("### About Quadratic Voting 📜")
+    st.markdown(
+        """
+        Each participant starts with **100 credits**. Voting works as follows:
+        - **1 vote** costs **1 credit**.
+        - **2 votes** cost **4 credits** (1 + 4 = 5 total).
+        - **3 votes** cost **9 credits** (1 + 4 + 9 = 14 total).
+        
+        Cumulative costs apply only to votes for the same project, encouraging expression of preference.
+        """
+    )
+
+    # Voting Instructions
+    st.markdown("### Instructions ✅")
+    st.markdown(
+        """
+        - Review each project's details before voting.
+        - Allocate credits based on genuine preference and project value.
+        - Vote fairly and strategically—this ensures the best projects get recognized.
+        """
+    )
     st.markdown("---")
 
 # Main content area for projects
@@ -43,12 +67,18 @@ with col1:
         st.write(project["description"])
         st.markdown(f"[GitHub Link]({project['github_url']})")
 
-        # Slider for votes
+        # Number input for votes
         votes = st.number_input(f"Votes for {project['name']}", min_value=0, step=1, key=project["id"])
-        
-        # Calculate credits
+
+        # Update session state with the new vote count
         st.session_state["votes"][project["id"]] = votes
-        total_cost = sum(quadratic_cost(v) for v in st.session_state["votes"].values())
+
+        # Calculate the total cost for this project's votes
+        total_cost = 0
+        for project_id, vote_count in st.session_state["votes"].items():
+            total_cost += quadratic_cost(vote_count)
+
+        # Update credits by deducting the total cost from 100
         st.session_state["credits"] = max(0, 100 - total_cost)
 
 # Sticky submit button at the bottom

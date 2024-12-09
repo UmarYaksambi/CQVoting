@@ -10,6 +10,8 @@ app = FastAPI()
 # Initialize the mock database for storing projects
 projects = []
 
+votes_db = []
+
 # GitHub API Base URL
 GITHUB_API_URL = "https://api.github.com/repos"
 
@@ -26,6 +28,10 @@ class Project(BaseModel):
     preview_image_url: Optional[str] = None
     readme_content: Optional[str] = None
     main_code_file: Optional[str] = None
+
+class VoteSubmission(BaseModel):
+    votes: dict
+    votes: dict  
 
 # Helper function to fetch repository data from GitHub (with authentication)
 def fetch_github_project_details(github_url):
@@ -111,3 +117,27 @@ def create_project(project: Project):
 
     projects.append(new_project)  # Save the project to the mock database
     return new_project
+
+@app.post("/submit-votes")
+def submit_votes(submission: VoteSubmission):
+    total_credits = sum(v**2 for v in submission.votes.values())
+    if total_credits > 100:
+        raise HTTPException(status_code=400, detail="Not enough credits")
+    total_credits_used = 0
+    # Calculate the total cost of votes
+    for project_id, votes in submission.votes.items():
+        # Calculate the cumulative quadratic cost for votes per project
+        cumulative_cost = sum(i**2 for i in range(1, votes + 1))
+        total_credits_used += cumulative_cost
+    # Check if total credits exceed the limit
+    if total_credits_used > 100:
+        raise HTTPException(
+            status_code=400, detail="Not enough credits to submit these votes."
+        )
+    # Store the votes in the mock database
+    votes_db.append(submission.votes)
+    return {"message": "Votes submitted successfully!"}
+
+@app.get("/results")
+def get_results():
+    results = {}

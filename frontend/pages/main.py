@@ -79,7 +79,7 @@ def main():
 
                 with col1_2:
                     # Project description
-                    st.write(f"**Description:** {project['description']}")
+                    st.markdown(f"### Description: \n{project['description']}")
                     
                     # Display links to GitHub and YouTube if available
                     st.markdown(f"[GitHub Link]({project['github_url']})")
@@ -91,10 +91,10 @@ def main():
                         st.markdown("No YouTube link available")
                     
                     # Display README content
-                    st.markdown("### README 📖")
+                    st.markdown("#### README 📖")
                     # Generate a unique key for each readme using either project['id'] or fallback to the loop index if id is None
                     unique_readme_key = f"readme_{project['id']}" if project['id'] else f"readme_{projects.index(project)}"
-                    st.text_area("README", value=project["readme_content"], height=300, disabled=True, key=unique_readme_key)
+                    st.text_area("README FROM GITHUB", value=project["readme_content"], height=300, disabled=True, key=unique_readme_key)
 
                     # Ensure a unique key for each number_input element
                     unique_vote_key = f"vote_{project['id']}" if project['id'] else f"vote_{projects.index(project)}"

@@ -1,7 +1,29 @@
 import streamlit as st
 import requests
+from time import sleep
+from streamlit_cookies_manager import EncryptedCookieManager
+import os
+from dotenv import load_dotenv
 
-BACKEND_URL = "http://localhost:8080"  
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the password from environment variable
+password = os.getenv("CQVOTING_COOKIE_PASSWORD")
+
+# Check if password is not set
+if password is None:
+    st.error("The 'CQVOTING_COOKIE_PASSWORD' environment variable is not set.")
+    st.stop()  # Stop further execution if the password is missing
+
+# Initialize EncryptedCookieManager with the password
+cookies = EncryptedCookieManager(prefix="cqvoting", password=password)
+
+# Check if cookies are ready
+if not cookies.ready():
+    st.stop()  # Stop if cookies are not ready
+
+BACKEND_URL = "http://localhost:8080"
 
 # Function for the project page
 def project_page():
@@ -49,11 +71,11 @@ def project_page():
     else:
         st.warning("Please fill all the fields before submitting.")
 
-
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
-
-if st.session_state["logged_in"] == True:
+# Check if user is logged in
+if "logged_in" in cookies and cookies["logged_in"]:
     project_page()
 else:
+    # Redirect to the login page if the user is not logged in
+    st.warning("You must be logged in to access this page.")
+    sleep(1)
     st.switch_page("pages/login.py")

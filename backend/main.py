@@ -4,6 +4,7 @@ import requests
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from dotenv import load_dotenv
 
 app = FastAPI()
 
@@ -15,6 +16,7 @@ votes_db = []
 # GitHub API Base URL
 GITHUB_API_URL = "https://api.github.com/repos"
 
+load_dotenv(dotenv_path='../.env')
 # GitHub Personal Access Token (make sure to replace with your own token)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Replace with your actual token
 

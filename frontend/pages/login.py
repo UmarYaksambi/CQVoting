@@ -1,37 +1,61 @@
 import streamlit as st
 from time import sleep
-from st_pages import hide_pages
+from streamlit_cookies_manager import EncryptedCookieManager
+import os
+from dotenv import load_dotenv
 
-# Hide the login page in the sidebar
-hide_pages(["login"])
+# Load environment variables from the .env file
+load_dotenv(dotenv_path='../.env')
+
+# Get the password from the environment variable
+password = os.getenv("CQVOTING_COOKIE_PASSWORD")
+
+# Ensure the password is loaded correctly
+if password is None:
+    st.error("The 'CQVOTING_COOKIE_PASSWORD' environment variable is not set.")
+    st.stop()
+
+# Initialize the cookie manager with the correct password
+cookies = EncryptedCookieManager(prefix="cqvoting", password=password)
+
+# Ensure the cookie manager is ready
+if not cookies.ready():
+    st.stop()
 
 # Function to handle login logic
 def check_login(username, password):
     # Replace this logic with actual user authentication (e.g., database check)
     return username == "user" and password == "password"
 
-# Streamlit UI
+# Streamlit UI for login
 st.title("Login Page")
 
 # Input fields for username and password
 username = st.text_input("Username")
-password = st.text_input("Password", type="password")
+password_input = st.text_input("Password", type="password")
 
 # Handling login button click
 if st.button("Login"):
-    if check_login(username, password):
-        # Set session state for login
-        st.session_state["logged_in"] = True
+    if check_login(username, password_input):
+        # Set login state in cookies
+        cookies["logged_in"] = "true"
+        cookies["username"] = username
+        cookies.save()  # Save the cookies
         st.success("Logged in successfully!")
-        sleep(1)
-        st.switch_page("pages/project.py")  # Switch to the project page
+        st.switch_page("pages/project.py")
     else:
         st.error("Invalid credentials!")
 
-# Check if user is logged in and provide log out option
-if "logged_in" in st.session_state and st.session_state["logged_in"]:
+# Check if user is logged in using cookies
+logged_in = cookies.get("logged_in", "false") == "true"
+
+if logged_in:
+    st.success(f"Welcome, {cookies.get('username')}!")
     if st.button("Log out"):
-        st.session_state["logged_in"] = False
+        # Clear the login state from cookies
+        cookies["logged_in"] = "false"
+        cookies["username"] = ""
+        cookies.save()  # Save the cleared cookies
         st.success("Logged out!")
         sleep(0.5)
-        st.switch_page("login")  # Redirect to login page after log out
+        st.switch_page("pages/login.py")

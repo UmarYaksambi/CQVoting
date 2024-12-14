@@ -34,7 +34,7 @@ Thumbs.db
 
 # Streamlit Caches
 .streamlit/
-.stcache/
+.stcache_data/
 .stlogger/
 
 # FastAPI-related

@@ -76,7 +76,7 @@ if st.button("Login"):
             st.error("No user found with the provided user_id.")
 
         # Redirect to the project page
-        st.experimental_rerun()
+        st.switch_page("pages/project.py")
     else:
         st.error("Invalid credentials!")
 

@@ -114,6 +114,8 @@ Got ideas to make this even more awesome? Contribute to the project! Whether it�
 - **Suggest Features**: Have an idea to make CQV better? We’re all ears! 👂
 - **Pull Requests**: Feel like improving the code? Open a PR, and let’s make this project rock even harder! 🎸
 
+[☕ Buy Me a Coffee](https://www.buymeacoffee.com/umaryaksambi)
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
